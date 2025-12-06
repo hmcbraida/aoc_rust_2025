@@ -17,7 +17,7 @@ fn parse_file(file_path: &str) -> InputData {
             let datum = match direction {
                 'L' => -rest,
                 'R' => rest,
-                _ => panic!(),
+                _ => panic!("Unexpected direction '{}'", direction),
             };
 
             return datum;
