@@ -28,27 +28,35 @@ fn parse_file(file_path: &str) -> InputData {
 }
 
 fn count_zeros(input: InputData) -> (u64, u64) {
+    // count will represent the number of times we stop at 0.
     let mut count = 0;
+    // n_clicks will represent the number of times we "click past" 0.
     let mut n_clicks = 0;
+    // We use this to keep track of our position as we loop through the input.
     let mut current_pos = 50;
 
     for datum in input {
         let new_pos = current_pos + datum;
+        // The number of clicks is (about) the Euclidean remainder.
+        // See the correction factors below.
         let mut clicks = new_pos.div_euclid(100).abs() as u64;
+        // New position is of course the Euclidean division.
         let new_pos = new_pos.rem_euclid(100);
 
-        println!("{}, {}, {}, {}", current_pos, datum, new_pos, clicks);
-
+        // We need a little correction factor or two here...
+        // We should NOT count it as a click if we started at zero and loop back
+        // round.
         if current_pos == 0 && datum < 0 {
-            println!("-1 click!");
             clicks -= 1;
         }
 
+        // We SHOULD count it as a click if we started at say 75 and rotate 25
+        // to reach 0.
         if new_pos == 0 && datum < 0 {
-            println!("+1 click!");
             clicks += 1;
         }
 
+        // Update position
         current_pos = new_pos;
 
         if current_pos == 0 {
