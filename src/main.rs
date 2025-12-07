@@ -1,4 +1,5 @@
 mod day1;
+mod day2;
 
 use std::env;
 
@@ -10,6 +11,7 @@ fn main() {
 
     let target_fn = match target_fn_str {
         "day1" => day1::go,
+        "day2" => day2::go,
         _ => panic!("Unexpected subcommand {}", target_fn_str),
     };
 
