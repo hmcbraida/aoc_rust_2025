@@ -23,7 +23,7 @@ fn parse_input(file_path: &str) -> InputData {
     return contents;
 }
 
-fn is_special(val: u64) -> bool {
+fn is_special1(val: u64) -> bool {
     let val_str = val.to_string();
 
     if val_str.len() % 2 == 1 {
@@ -38,30 +38,66 @@ fn is_special(val: u64) -> bool {
     return first_half == second_half;
 }
 
-fn count_specials(interval: (u64, u64), seen: &mut HashSet<u64>) -> u64 {
+fn is_special2(val: u64) -> bool {
+    let val_str = val.to_string();
+
+    for pattern_size in 1..=(val_str.len() / 2) {
+        if val_str.len() % pattern_size != 0 {
+            continue;
+        }
+
+        let target_pattern = &val_str[..pattern_size];
+        let mut success = true;
+        for i in 1..val_str.len() / pattern_size {
+            let test_pattern = &val_str[i * pattern_size..(i + 1) * pattern_size];
+            if test_pattern != target_pattern {
+                success = false;
+                break;
+            }
+        }
+
+        if success {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+fn count_specials(interval: (u64, u64), seen: &mut HashSet<u64>) -> (u64, u64) {
     let (start_n, end_n) = interval;
-    let mut count = 0;
+    let mut count1 = 0;
+    let mut count2 = 0;
     for n in start_n..=end_n {
         if seen.contains(&n) {
             continue;
         }
         seen.insert(n);
-        if is_special(n) {
-            count += n;
+        if is_special1(n) {
+            count1 += n;
+        }
+        if is_special2(n) {
+            count2 += n;
         }
     }
 
-    return count;
+    return (count1, count2);
 }
 
 pub fn go(file_path: &str) -> String {
     let input_data = parse_input(file_path);
 
     let mut seen = HashSet::new();
-    let mut count = 0;
+    let mut count1 = 0;
+    let mut count2 = 0;
     for interval in input_data {
-        count += count_specials(interval, &mut seen);
+        let (delta1, delta2) = count_specials(interval, &mut seen);
+        count1 += delta1;
+        count2 += delta2;
     }
 
-    return String::from(format!("Total count: {}", count));
+    return String::from(format!(
+        "Count (part 1): {}; count (part 2): {}",
+        count1, count2
+    ));
 }
