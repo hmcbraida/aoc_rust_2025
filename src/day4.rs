@@ -7,6 +7,7 @@ struct InputData {
 }
 
 impl InputData {
+    /// Checks whether a point c is within bounds.
     fn within_bnd(&self, c: (i32, i32)) -> bool {
         let (x, y) = c;
         if x >= self.width as i32 || x < 0 {
@@ -20,7 +21,9 @@ impl InputData {
         return true;
     }
 
+    /// Get the squares surrounding coords x and y
     fn get_surrounds(&self, x: usize, y: usize) -> Vec<(usize, usize)> {
+        // Allow them to be negative temporarily
         let x = x as i32;
         let y = y as i32;
 
@@ -38,13 +41,14 @@ impl InputData {
         deltas
             .iter()
             .map(|delta| {
+                // move in each possible direction
                 let (dx, dy) = delta;
                 ((x + *dx), (y + *dy))
             })
-            .filter(|c| self.within_bnd(*c))
+            .filter(|c| self.within_bnd(*c)) // remove OOB
             .map(|c| {
                 let (x, y) = c;
-                (x as usize, y as usize)
+                (x as usize, y as usize) // back to usize
             })
             .collect()
     }
@@ -54,11 +58,11 @@ fn parse_input(input_path: &str) -> InputData {
     let roll_matrix: Vec<Vec<bool>> = fs::read_to_string(input_path)
         .unwrap()
         .split("\n")
-        .filter(|x| return x.len() > 0)
+        .filter(|x| return x.len() > 0) // ignore blank line
         .map(|x| {
             x.chars()
                 .map(|x| match x {
-                    '@' => true,
+                    '@' => true, // @ => roll, otherwise blank space.
                     _ => false,
                 })
                 .collect()
@@ -75,6 +79,7 @@ fn parse_input(input_path: &str) -> InputData {
     }
 }
 
+/// Construct the adjacency count matrix for each point.
 fn construct_adjacency(data: &InputData) -> Vec<Vec<u8>> {
     let mut adjacency: Vec<Vec<u8>> = data
         .roll_matrix
@@ -97,8 +102,11 @@ fn construct_adjacency(data: &InputData) -> Vec<Vec<u8>> {
     adjacency
 }
 
+/// Check which squares are removable.
+///
+/// A square is removable iff it has fewer than 4 neighbours.
 fn check_can_remove(input_data: &InputData, adjacency: &Vec<Vec<u8>>) -> Vec<Vec<bool>> {
-    let can_remove = adjacency
+    adjacency
         .iter()
         .zip(input_data.roll_matrix.iter())
         .map(|row| {
@@ -108,22 +116,22 @@ fn check_can_remove(input_data: &InputData, adjacency: &Vec<Vec<u8>>) -> Vec<Vec
                 .zip(input_row)
                 .map(|x| {
                     let (n_adj, is_roll) = x;
+                    // key condition:
                     if *is_roll && *n_adj < 4 { true } else { false }
                 })
                 .collect()
-            // let (adj_count, is_roll) = x;
-            // (**adj_count < 4) && **is_roll
         })
-        .collect();
-
-    can_remove
+        .collect()
 }
 
 pub fn go(input_path: &str) -> String {
+    // initial input and adjacency matrix.
+    // mutable because they will change iteratively in pt 2!
     let mut input_data = parse_input(input_path);
     let mut adjacency = construct_adjacency(&input_data);
 
     let mut removable: Vec<Vec<bool>>;
+    // this tracks what the initially removable count was (pt 1)
     let mut n_removable_initially = 0;
     let mut total_n_removable = 0;
 
@@ -131,12 +139,18 @@ pub fn go(input_path: &str) -> String {
         removable = check_can_remove(&input_data, &adjacency);
         let n_removable = removable.iter().flatten().filter(|x| **x).count();
         if n_removable == 0 {
+            // we are done
             break;
         }
         if n_removable_initially == 0 {
+            // hacky but oh well
             n_removable_initially = n_removable;
         }
+        // increment the total number that we will be able to remove.
         total_n_removable += n_removable;
+        // remove all removable rolls.
+        // removable <=> there exists a roll already, and it is marked as
+        // removable.
         input_data.roll_matrix = input_data
             .roll_matrix
             .iter()
@@ -149,6 +163,7 @@ pub fn go(input_path: &str) -> String {
                     .collect()
             })
             .collect();
+        // recompute the adjacency matrix.
         adjacency = construct_adjacency(&input_data);
     }
 
