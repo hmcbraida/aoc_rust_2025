@@ -37,42 +37,40 @@ fn parse_input(input_path: &str) -> InputData {
     }
 }
 
-fn find_splits(input_data: &InputData) -> u64 {
+fn find_splits(input_data: &InputData) -> (u64, u64) {
     let w = input_data.splitter_rows[0].len();
-    let initial_splits: Vec<bool> = (0..w)
-        .map(|idx| {
-            if idx == input_data.start_idx {
-                true
-            } else {
-                false
-            }
-        })
+    let initial_timelines: Vec<u64> = (0..w)
+        .map(|idx| if idx == input_data.start_idx { 1 } else { 0 })
         .collect();
 
-    let (_, split_count) = input_data.splitter_rows.iter().fold(
-        (initial_splits, 0),
-        |(prev_beams, split_count), row| {
-            let mut new_row: Vec<bool> = (0..w).map(|_| false).collect();
+    let (final_timelines, split_count) = input_data.splitter_rows.iter().fold(
+        (initial_timelines, 0),
+        |(prev_timelines, split_count), row| {
+            let mut new_row: Vec<u64> = (0..w).map(|_| 0).collect();
             let mut split_count = split_count;
+
+            // println!("{:?}", prev_timelines);
 
             for (col_idx, is_splitter) in row.iter().enumerate() {
                 let is_splitter = *is_splitter;
 
-                if !prev_beams[col_idx] {
+                let n_prev_timelines = prev_timelines[col_idx];
+
+                if n_prev_timelines == 0 {
                     continue;
                 }
 
                 if is_splitter {
                     if let Some(r) = new_row.get_mut(col_idx + 1) {
-                        *r = true;
+                        *r += n_prev_timelines;
                     }
                     if let Some(l) = new_row.get_mut(col_idx - 1) {
-                        *l = true;
+                        *l += n_prev_timelines;
                     }
 
                     split_count += 1;
                 } else {
-                    new_row[col_idx] = true;
+                    new_row[col_idx] += n_prev_timelines;
                 }
             }
 
@@ -82,14 +80,19 @@ fn find_splits(input_data: &InputData) -> u64 {
         },
     );
 
-    split_count
+    // println!("{:?}", final_timelines);
+
+    (split_count, final_timelines.iter().sum())
 }
 
 pub fn go(input_path: &str) -> String {
     let input_data = parse_input(&input_path);
 
-    let n_splits = find_splits(&input_data);
+    let (n_splits, n_timelines) = find_splits(&input_data);
 
     // format!("{:?}\n{:?}", input_data, splits)
-    format!("Total splits: {}", n_splits)
+    format!(
+        "Total splits: {}\nTotal timelines: {}",
+        n_splits, n_timelines
+    )
 }
