@@ -5,6 +5,7 @@ mod day4;
 mod day5;
 mod day6;
 mod day7;
+mod day8;
 
 use std::env;
 
@@ -22,6 +23,7 @@ fn main() {
         "day5" => day5::go,
         "day6" => day6::go,
         "day7" => day7::go,
+        "day8" => day8::go,
         _ => panic!("Unexpected subcommand {}", target_fn_str),
     };
 
